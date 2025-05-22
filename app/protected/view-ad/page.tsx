@@ -17,10 +17,20 @@ interface Ad {
   user_id: string;
 }
 
+interface ApplicationStatus {
+  id?: string;
+  status?: string;
+  exists: boolean;
+}
+
 export default function ViewAdPage() {
   const [ad, setAd] = useState<Ad | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [applicationStatus, setApplicationStatus] = useState<ApplicationStatus>({ exists: false });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -35,6 +45,8 @@ export default function ViewAdPage() {
           router.push("/sign-in");
           return;
         }
+
+        setCurrentUser(user);
 
         // Get the ad ID from the URL query parameters
         const adId = searchParams.get('id');
@@ -59,6 +71,22 @@ export default function ViewAdPage() {
         }
 
         setAd(data);
+
+        // Check if the user has already applied for this ad
+        const { data: applicationData, error: applicationError } = await supabase
+          .from('job_applications')
+          .select('id, status')
+          .eq('ad_id', adId)
+          .eq('applicant_id', user.id)
+          .single();
+
+        if (applicationData) {
+          setApplicationStatus({
+            exists: true,
+            id: applicationData.id,
+            status: applicationData.status
+          });
+        }
       } catch (error) {
         console.error("Failed to fetch ad:", error);
         setError("An unexpected error occurred");
@@ -69,6 +97,55 @@ export default function ViewAdPage() {
 
     fetchAd();
   }, [searchParams]);
+
+  const handleApply = async () => {
+    if (!ad || !currentUser || isSubmitting) return;
+    
+    setIsSubmitting(true);
+    setSuccessMessage(null);
+    
+    try {
+      // Create a job application
+      const { data: applicationData, error: applicationError } = await supabase
+        .from('job_applications')
+        .insert({
+          ad_id: ad.id,
+          applicant_id: currentUser.id,
+          poster_id: ad.user_id,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (applicationError) {
+        throw applicationError;
+      }
+
+      // Create a system message to notify the poster
+      await supabase
+        .from('messages')
+        .insert({
+          application_id: applicationData.id,
+          sender_id: currentUser.id,
+          receiver_id: ad.user_id,
+          content: `I am interested in your ad: "${ad.title}"`,
+          is_system_message: true
+        });
+
+      setApplicationStatus({
+        exists: true,
+        id: applicationData.id,
+        status: 'pending'
+      });
+      
+      setSuccessMessage("Your interest has been sent to the poster!");
+    } catch (error: any) {
+      console.error("Error applying for ad:", error);
+      setError(error.message || "Failed to apply for this ad");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   if (loading) {
     return <div className="flex-1 w-full flex items-center justify-center">Loading ad details...</div>;
@@ -90,6 +167,8 @@ export default function ViewAdPage() {
     );
   }
 
+  const isOwner = currentUser && ad.user_id === currentUser.id;
+
   return (
     <div className="flex-1 w-full flex flex-col items-center py-8">
       <div className="w-full max-w-2xl p-6 bg-white rounded-lg shadow-md">
@@ -102,7 +181,13 @@ export default function ViewAdPage() {
           </Link>
         </div>
         
-        <h1 className="text-3xl font-bold mb-2">{ad.title}</h1>
+        {successMessage && (
+          <div className="mb-6 p-3 bg-green-100 text-green-700 rounded">
+            {successMessage}
+          </div>
+        )}
+        
+        <h1 className="text-3xl font-bold mb-2 text-gray-800">{ad.title}</h1>
         
         <div className="flex flex-wrap gap-2 mb-4">
           <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
@@ -127,11 +212,63 @@ export default function ViewAdPage() {
         )}
         
         <div className="border-t border-b py-6 my-6">
-          <h2 className="text-xl font-semibold mb-4">Description</h2>
-          <p className="whitespace-pre-line">{ad.description}</p>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Description</h2>
+          <p className="whitespace-pre-line text-gray-700">{ad.description}</p>
         </div>
         
-        <div className="flex justify-between items-center text-sm text-gray-500">
+        {!isOwner && (
+          <div className="mt-6">
+            {applicationStatus.exists ? (
+              <div className="p-4 bg-gray-100 rounded-md">
+                <p className="font-medium text-gray-800">
+                  Application Status: <span className={`${
+                    applicationStatus.status === 'pending' ? 'text-yellow-600' : 
+                    applicationStatus.status === 'accepted' ? 'text-green-600' : 
+                    'text-red-600'
+                  }`}>
+                    {applicationStatus.status?.charAt(0).toUpperCase() + applicationStatus.status?.slice(1)}
+                  </span>
+                </p>
+                {applicationStatus.status === 'pending' && (
+                  <p className="text-sm mt-2 text-gray-600">Your application is being reviewed by the poster.</p>
+                )}
+                {applicationStatus.status === 'accepted' && (
+                  <div className="mt-2">
+                    <p className="text-sm text-gray-600">Your application has been accepted!</p>
+                    <Link href={`/protected/messages?application=${applicationStatus.id}`}>
+                      <button className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                        View Messages
+                      </button>
+                    </Link>
+                  </div>
+                )}
+                {applicationStatus.status === 'rejected' && (
+                  <p className="text-sm mt-2 text-gray-600">Your application was not accepted for this position.</p>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={handleApply}
+                disabled={isSubmitting}
+                className="w-full py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors disabled:bg-blue-300"
+              >
+                {isSubmitting ? "Sending..." : "I am interested"}
+              </button>
+            )}
+          </div>
+        )}
+        
+        {isOwner && (
+          <div className="mt-6">
+            <Link href={`/protected/applications?ad=${ad.id}`}>
+              <button className="w-full py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                View Applications
+              </button>
+            </Link>
+          </div>
+        )}
+        
+        <div className="flex justify-between items-center text-sm text-gray-500 mt-6">
           <div>
             Posted: {new Date(ad.created_at).toLocaleDateString()}
           </div>
