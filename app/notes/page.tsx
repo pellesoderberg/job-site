@@ -12,7 +12,8 @@ export default async function Page() {
     return redirect('/sign-in')
   }
   
-  const { data: notes } = await supabase.from('notes').select()
+  const { data: user_ads } = await supabase.from('user_ads').select()
 
-  return <pre>{JSON.stringify(notes, null, 2)}</pre>
+
+  return <pre>{JSON.stringify(user_ads, null, 2)}</pre>
 }
