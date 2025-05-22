@@ -9,6 +9,7 @@ interface UserAd {
   price: number;
   category: string;
   location: string;
+  region: string;
   created_at: string;
 }
 

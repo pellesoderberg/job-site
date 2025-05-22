@@ -90,7 +90,7 @@ export default function UserAdsSection() {
               key={ad.id} 
               className="border rounded-md overflow-hidden hover:shadow-md transition-shadow"
             >
-              <Link href={`/ads/${ad.id}`} className="block">
+              <Link href={`/protected/view-ad?id=${ad.id}`} className="block">
                 <div className="p-4">
                   <div className="flex justify-between items-start">
                     <div>
