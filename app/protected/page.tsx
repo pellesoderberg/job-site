@@ -1,38 +1,22 @@
-import FetchDataSteps from "@/components/tutorial/fetch-data-steps";
-import { createClient } from "@/utils/supabase/server";
-import { InfoIcon } from "lucide-react";
-import { redirect } from "next/navigation";
+import Hero from "@/components/hero";
+import ConnectSupabaseSteps from "@/components/tutorial/connect-supabase-steps";
+import SignUpUserSteps from "@/components/tutorial/sign-up-user-steps";
+import { hasEnvVars } from "@/utils/supabase/check-env-vars";
+import UserAdsSection from "@/components/user-ads-section";
+import { SearchProvider } from "@/components/search-context";
+import SearchAd from "@/components/search-ad";
 
-export default async function ProtectedPage() {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return redirect("/sign-in");
-  }
-
+export default function Home() {
   return (
-    <div className="flex-1 w-full flex flex-col gap-12">
-      <div className="w-full">
-        <div className="bg-accent text-sm p-3 px-5 rounded-md text-foreground flex gap-3 items-center">
-          <InfoIcon size="16" strokeWidth={2} />
-          This is a protected page that you can only see as an authenticated
-          user
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 items-start">
-        <h2 className="font-bold text-2xl mb-4">Your user details</h2>
-        <pre className="text-xs font-mono p-3 rounded border max-h-32 overflow-auto">
-          {JSON.stringify(user, null, 2)}
-        </pre>
-      </div>
-      <div>
-        <h2 className="font-bold text-2xl mb-4">Next steps</h2>
-        <FetchDataSteps />
-      </div>
-    </div>
+    <main className="flex min-h-screen flex-col items-center justify-between p-24">
+      <SearchProvider>
+        <SearchAd />
+        <UserAdsSection />
+      </SearchProvider>
+      <main className="flex-1 flex flex-col gap-6 px-4">
+        <h2 className="font-medium text-xl mb-4">Next steps</h2>
+        {hasEnvVars ? <SignUpUserSteps /> : <ConnectSupabaseSteps />}
+      </main>
+    </main>
   );
 }
