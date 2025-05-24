@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
+// In the Message interface, add the new field
 interface Message {
   id: string;
   application_id: string;
@@ -13,7 +14,9 @@ interface Message {
   content: string;
   created_at: string;
   is_system_message: boolean;
+  for_applicant_only?: boolean;
   sender_username?: string;
+  read_status?: boolean;
 }
 
 interface Application {
@@ -52,8 +55,9 @@ export default function MessagesPage() {
   }, [messages]);
 
   // Set up real-time subscription for new messages
+  // In the real-time subscription handler
   useEffect(() => {
-    if (!applicationId || !currentUser) return;
+    if (!applicationId || !currentUser || !application) return;
 
     const subscription = supabase
       .channel(`messages:${applicationId}`)
@@ -66,6 +70,13 @@ export default function MessagesPage() {
           filter: `application_id=eq.${applicationId}`
         },
         async (payload) => {
+          // Skip system messages marked for applicant only if the current user is the poster
+          if (payload.new.is_system_message && 
+              payload.new.for_applicant_only && 
+              currentUser.id === application.poster_id) {
+            return;
+          }
+          
           // Fetch the sender username
           const { data: userData } = await supabase
             .from('profiles')
@@ -86,7 +97,7 @@ export default function MessagesPage() {
     return () => {
       supabase.removeChannel(subscription);
     };
-  }, [applicationId, currentUser]);
+  }, [applicationId, currentUser, application]);
 
   useEffect(() => {
     async function fetchData() {
@@ -159,6 +170,8 @@ export default function MessagesPage() {
             content, 
             created_at,
             is_system_message,
+            for_applicant_only,
+            read_status,
             profiles!messages_sender_id_fkey(username)
           `)
           .eq('application_id', applicationId)
@@ -168,19 +181,37 @@ export default function MessagesPage() {
           throw messagesError;
         }
         
-        // Format messages data
-        const formattedMessages = messagesData.map(msg => ({
-          id: msg.id,
-          application_id: msg.application_id,
-          sender_id: msg.sender_id,
-          receiver_id: msg.receiver_id,
-          content: msg.content,
-          created_at: msg.created_at,
-          is_system_message: msg.is_system_message,
-          sender_username: msg.profiles.username || 'Unknown User'
-        }));
-        
+        // Add this line to set the messages in state
+        const formattedMessages = messagesData
+          .filter(msg => {
+            // Filter out system messages marked for applicant only if the current user is the poster
+            if (msg.is_system_message && 
+                msg.for_applicant_only && 
+                user.id === formattedApp.poster_id) {
+              return false;
+            }
+            return true;
+          })
+          .map(msg => ({
+            ...msg,
+            sender_username: msg.profiles?.username || 'Unknown User'
+          }));
         setMessages(formattedMessages);
+        
+        // Mark unread messages as read if the current user is the receiver
+        const unreadMessages = messagesData.filter(msg => 
+          msg.receiver_id === user.id && !msg.read_status
+        );
+        
+        if (unreadMessages.length > 0) {
+          const unreadIds = unreadMessages.map(msg => msg.id);
+          
+          // Update read_status to true for all unread messages where user is the receiver
+          await supabase
+            .from('messages')
+            .update({ read_status: true })
+            .in('id', unreadIds);
+        }
       } catch (error) {
         console.error("Failed to fetch data:", error);
         setError("An unexpected error occurred");
@@ -207,26 +238,46 @@ export default function MessagesPage() {
         ? application.poster_id 
         : application.applicant_id;
       
-      // Insert the new message
+      // Create a temporary message object to display immediately
+      const tempMessage: Message = {
+        id: `temp-${Date.now()}`, // Temporary ID that will be replaced
+        application_id: application.id,
+        sender_id: currentUser.id,
+        receiver_id: receiverId,
+        content: newMessage,
+        created_at: new Date().toISOString(),
+        is_system_message: false,
+        sender_username: 'You',
+        read_status: false // New messages are unread by default
+      };
+      
+      // Add the message to the UI immediately
+      setMessages(prev => [...prev, tempMessage]);
+      
+      // Clear the input field
+      setNewMessage("");
+      
+      // Insert the new message into the database
       const { error: messageError } = await supabase
         .from('messages')
         .insert({
           application_id: application.id,
           sender_id: currentUser.id,
           receiver_id: receiverId,
-          content: newMessage,
-          is_system_message: false
+          content: tempMessage.content,
+          is_system_message: false,
+          read_status: false // New messages are unread by default
         });
         
       if (messageError) {
         throw messageError;
       }
-      
-      // Clear the input field
-      setNewMessage("");
     } catch (err: any) {
       console.error("Error sending message:", err);
       setError(err.message || "Failed to send message");
+      
+      // If there was an error, remove the temporary message
+      setMessages(prev => prev.filter(msg => !msg.id.startsWith('temp-')));
     } finally {
       setSendingMessage(false);
     }

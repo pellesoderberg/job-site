@@ -14,6 +14,7 @@ interface Application {
   created_at: string;
   ad_title: string;
   applicant_username: string;
+  initial_message?: string; // Added field for initial message
 }
 
 export default function ApplicationsPage() {
@@ -27,7 +28,8 @@ export default function ApplicationsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const adId = searchParams.get('ad');
-
+  const applicationId = searchParams.get('application');
+  
   useEffect(() => {
     async function fetchApplications() {
       try {
@@ -38,7 +40,7 @@ export default function ApplicationsPage() {
           router.push("/sign-in");
           return;
         }
-
+  
         let query = supabase
           .from('job_applications')
           .select(`
@@ -50,11 +52,14 @@ export default function ApplicationsPage() {
             created_at,
             user_ads!job_applications_ad_id_fkey(title),
             profiles!job_applications_applicant_id_fkey(username)
-          `)
-          .eq('poster_id', user.id);
+          `);
           
+        // If applicationId is provided, filter by that specific application
+        if (applicationId) {
+          query = query.eq('id', applicationId);
+        }
         // If adId is provided, filter by that specific ad
-        if (adId) {
+        else if (adId) {
           query = query.eq('ad_id', adId);
           
           // Also fetch the ad title
@@ -67,6 +72,10 @@ export default function ApplicationsPage() {
           if (!adError && adData) {
             setAdTitle(adData.title);
           }
+        }
+        // Otherwise, show all applications for the current user
+        else {
+          query = query.eq('poster_id', user.id);
         }
         
         const { data, error: applicationsError } = await query;
@@ -87,7 +96,26 @@ export default function ApplicationsPage() {
           applicant_username: app.profiles.username || 'Unknown User'
         }));
         
-        setApplications(formattedApplications);
+        // Fetch initial messages for each application
+        const applicationsWithMessages = await Promise.all(
+          formattedApplications.map(async (app) => {
+            const { data: messageData, error: messageError } = await supabase
+              .from('messages')
+              .select('content')
+              .eq('application_id', app.id)
+              .eq('is_system_message', true)
+              .order('created_at', { ascending: true })
+              .limit(1)
+              .single();
+              
+            return {
+              ...app,
+              initial_message: messageData?.content || ''
+            };
+          })
+        );
+        
+        setApplications(applicationsWithMessages);
       } catch (error) {
         console.error("Failed to fetch applications:", error);
         setError("An unexpected error occurred");
@@ -97,7 +125,7 @@ export default function ApplicationsPage() {
     }
 
     fetchApplications();
-  }, [adId]);
+  }, [adId, applicationId]);
 
   const handleUpdateStatus = async (applicationId: string, newStatus: 'accepted' | 'rejected') => {
     if (processingId) return; // Prevent multiple simultaneous updates
@@ -144,7 +172,8 @@ export default function ApplicationsPage() {
           sender_id: appData.poster_id,
           receiver_id: appData.applicant_id,
           content: messageContent,
-          is_system_message: true
+          is_system_message: true,
+          for_applicant_only: true  // Add this flag to indicate this message is only for the applicant
         });
         
       // Update the local state
@@ -215,6 +244,13 @@ export default function ApplicationsPage() {
                     {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
                   </div>
                 </div>
+                
+                {app.initial_message && (
+                  <div className="mt-3 p-3 bg-gray-50 rounded-md">
+                    <p className="text-sm font-medium text-gray-700 mb-1">Applicant's message:</p>
+                    <p className="text-sm text-gray-600">{app.initial_message}</p>
+                  </div>
+                )}
                 
                 {app.status === 'pending' && (
                   <div className="mt-4 flex gap-3">

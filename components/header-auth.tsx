@@ -12,6 +12,32 @@ export default async function AuthButton() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Fetch pending applications count and unread messages if user is logged in
+  let notificationCount = 0;
+  if (user) {
+    // Count pending applications where user is the poster
+    const { data: pendingApps, error: pendingError } = await supabase
+      .from('job_applications')
+      .select('id')
+      .eq('poster_id', user.id)
+      .eq('status', 'pending');
+      
+    if (!pendingError && pendingApps) {
+      notificationCount += pendingApps.length;
+    }
+    
+    // Count unread messages where user is the receiver
+    const { data: unreadMessages, error: messagesError } = await supabase
+      .from('messages')
+      .select('id')
+      .eq('receiver_id', user.id)
+      .eq('read_status', false);
+      
+    if (!messagesError && unreadMessages) {
+      notificationCount += unreadMessages.length;
+    }
+  }
+
   if (!hasEnvVars) {
     return (
       <>
@@ -68,6 +94,28 @@ export default async function AuthButton() {
           </svg>
           Lägg in annons
         </Button>
+      </Link>
+      <Link href="/protected/message-list" className="flex items-center hover:opacity-80 transition-opacity relative">
+        <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600">
+          <svg 
+            xmlns="http://www.w3.org/2000/svg" 
+            width="24" 
+            height="24" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+          >
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+          </svg>
+        </div>
+        {notificationCount > 0 && (
+          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            {notificationCount}
+          </div>
+        )}
       </Link>
       <Link href="/protected/user" className="flex items-center hover:opacity-80 transition-opacity">
         <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600">
