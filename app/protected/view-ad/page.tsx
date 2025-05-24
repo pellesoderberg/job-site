@@ -31,6 +31,7 @@ export default function ViewAdPage() {
   const [applicationStatus, setApplicationStatus] = useState<ApplicationStatus>({ exists: false });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [applicationMessage, setApplicationMessage] = useState("");
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -128,7 +129,7 @@ export default function ViewAdPage() {
           application_id: applicationData.id,
           sender_id: currentUser.id,
           receiver_id: ad.user_id,
-          content: `I am interested in your ad: "${ad.title}"`,
+          content: applicationMessage || `I am interested in your ad: "${ad.title}"`,
           is_system_message: true
         });
 
@@ -247,13 +248,28 @@ export default function ViewAdPage() {
                 )}
               </div>
             ) : (
-              <button
-                onClick={handleApply}
-                disabled={isSubmitting}
-                className="w-full py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors disabled:bg-blue-300"
-              >
-                {isSubmitting ? "Sending..." : "I am interested"}
-              </button>
+              <div>
+                <div className="mb-4">
+                  <label htmlFor="applicationMessage" className="block text-sm font-medium text-gray-700 mb-2">
+                    Message to the poster (optional)
+                  </label>
+                  <textarea
+                    id="applicationMessage"
+                    rows={4}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Introduce yourself and explain why you're interested in this ad..."
+                    value={applicationMessage}
+                    onChange={(e) => setApplicationMessage(e.target.value)}
+                  />
+                </div>
+                <button
+                  onClick={handleApply}
+                  disabled={isSubmitting}
+                  className="w-full py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors disabled:bg-blue-300"
+                >
+                  {isSubmitting ? "Sending..." : "I am interested"}
+                </button>
+              </div>
             )}
           </div>
         )}

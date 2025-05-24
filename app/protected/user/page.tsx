@@ -295,6 +295,15 @@ export default function UserProfilePage() {
                                             </button>
                                           </Link>
                                         )}
+                                        
+                                        {/* Add View Application button for pending applications */}
+                                        {app.status === 'pending' && (
+                                          <Link href={`/protected/applications?application=${app.id}`}>
+                                            <button className="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">
+                                              Review
+                                            </button>
+                                          </Link>
+                                        )}
                                       </div>
                                     </div>
                                   ))}
@@ -371,8 +380,11 @@ export default function UserProfilePage() {
                         )}
                         
                         {app.status === 'pending' && (
-                          <div className="text-sm text-yellow-600">
-                            Waiting for response
+                          <div className="flex space-x-2">
+                            <div className="text-sm text-yellow-600">
+                              Waiting for response
+                            </div>
+                            {/* Removed the View Application button for applicants */}
                           </div>
                         )}
                         
