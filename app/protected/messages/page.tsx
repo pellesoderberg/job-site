@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useNotifications } from "@/components/notification-context";
 
 // In the Message interface, add the new field
 interface Message {
@@ -39,6 +40,7 @@ export default function MessagesPage() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [sendingMessage, setSendingMessage] = useState(false);
   
+  const { decrementNotificationCount } = useNotifications();
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -80,13 +82,13 @@ export default function MessagesPage() {
           // Fetch the sender username
           const { data: userData } = await supabase
             .from('profiles')
-            .select('username')
+            .select('username, email_name')
             .eq('id', payload.new.sender_id)
             .single();
 
           const newMsg = {
             ...payload.new,
-            sender_username: userData?.username || 'Unknown User'
+            sender_username: userData?.username || userData?.email_name || 'Unknown User'
           };
           
           setMessages(prev => [...prev, newMsg]);
@@ -128,8 +130,8 @@ export default function MessagesPage() {
             poster_id, 
             status,
             user_ads!job_applications_ad_id_fkey(title),
-            applicant:profiles!job_applications_applicant_id_fkey(username),
-            poster:profiles!job_applications_poster_id_fkey(username)
+            applicant:profiles!job_applications_applicant_id_fkey(username, email_name),
+            poster:profiles!job_applications_poster_id_fkey(username, email_name)
           `)
           .eq('id', applicationId)
           .single();
@@ -153,8 +155,8 @@ export default function MessagesPage() {
           poster_id: appData.poster_id,
           status: appData.status,
           ad_title: appData.user_ads.title,
-          applicant_username: appData.applicant?.username || 'Unknown User',
-          poster_username: appData.poster?.username || 'Unknown User'
+          applicant_username: appData.applicant?.username || appData.applicant?.email_name || 'Unknown User',
+          poster_username: appData.poster?.username || appData.poster?.email_name || 'Unknown User'
         };
         
         setApplication(formattedApp);
@@ -172,7 +174,7 @@ export default function MessagesPage() {
             is_system_message,
             for_applicant_only,
             read_status,
-            profiles!messages_sender_id_fkey(username)
+            profiles!messages_sender_id_fkey(username, email_name)
           `)
           .eq('application_id', applicationId)
           .order('created_at', { ascending: true });
@@ -194,7 +196,7 @@ export default function MessagesPage() {
           })
           .map(msg => ({
             ...msg,
-            sender_username: msg.profiles?.username || 'Unknown User'
+            sender_username: msg.profiles?.username || msg.profiles?.email_name || 'Unknown User'
           }));
         setMessages(formattedMessages);
         
@@ -211,6 +213,9 @@ export default function MessagesPage() {
             .from('messages')
             .update({ read_status: true })
             .in('id', unreadIds);
+            
+          // Decrease notification count by the number of messages marked as read
+          decrementNotificationCount(unreadMessages.length);
         }
       } catch (error) {
         console.error("Failed to fetch data:", error);
@@ -221,7 +226,7 @@ export default function MessagesPage() {
     }
 
     fetchData();
-  }, [applicationId]);
+  }, [applicationId, decrementNotificationCount]);
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();

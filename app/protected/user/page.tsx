@@ -33,7 +33,7 @@ export default function UserProfilePage() {
       // Fetch user data from the 'profiles' table
       const { data, error } = await supabase
         .from('profiles')
-        .select('username, user_description')
+        .select('username, user_description, email_name, municipality')
         .eq('id', user.id)
         .single();
       
@@ -67,7 +67,7 @@ export default function UserProfilePage() {
           status,
           created_at,
           user_ads!job_applications_ad_id_fkey(title, region, municipality),
-          profiles!job_applications_poster_id_fkey(username)
+          profiles!job_applications_poster_id_fkey(username, email_name)
         `)
         .eq('applicant_id', user.id)
         .order('created_at', { ascending: false });
@@ -84,7 +84,7 @@ export default function UserProfilePage() {
           ad_title: app.user_ads?.title || 'Unknown Ad',
           ad_region: app.user_ads?.region || '',
           ad_municipality: app.user_ads?.municipality || '',
-          poster_username: app.profiles?.username || 'Unknown User'
+          poster_username: app.profiles?.username || app.profiles?.email_name || 'Unknown User'
         })) || [];
         
         setUserApplications(formattedApplications);
@@ -151,7 +151,7 @@ export default function UserProfilePage() {
     return <div className="flex-1 w-full flex items-center justify-center">Loading...</div>;
   }
 
-  const displayName = userData?.username || userData?.user_first_name || "User";
+  const displayName = userData?.username || userData?.email_name || "User";
   const presentation = userData?.user_description || "No presentation available";
 
   return (
@@ -170,6 +170,9 @@ export default function UserProfilePage() {
           </div>
           <h1 className="text-2xl font-bold">{displayName}</h1>
           <p className="text-sm text-gray-500">På Blocket sedan 2020</p>
+          {userData?.municipality && (
+            <p className="text-sm text-gray-500">{userData.municipality}</p>
+          )}
           
           {/* Action buttons */}
           <div className="flex gap-4 mt-6 w-full">
@@ -183,7 +186,7 @@ export default function UserProfilePage() {
               </svg>
               Redigera profil
             </button>
-            <Link href="#" className="flex-1">
+            <Link href={`/protected/user-profile?id=${user.id}`} className="flex-1">
               <button className="w-full border border-gray-300 py-2 px-4 rounded">
                 Visa publik profil
               </button>

@@ -13,6 +13,7 @@ interface Ad {
   municipality: string | null;
   price: number | null;
   category: string | null;
+  poster_category?: string;
   created_at: string;
   user_id: string;
 }
@@ -32,6 +33,7 @@ export default function ViewAdPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [applicationMessage, setApplicationMessage] = useState("");
+  const [posterFullName, setPosterFullName] = useState<string | null>(null);
   const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,6 +74,17 @@ export default function ViewAdPage() {
         }
 
         setAd(data);
+
+        // Fetch poster's username
+        const { data: posterData, error: posterError } = await supabase
+          .from('profiles')
+          .select('username, email_name')
+          .eq('id', data.user_id)
+          .single();
+
+        if (!posterError && posterData) {
+          setPosterFullName(posterData.username || posterData.email_name || 'Unknown User');
+        }
 
         // Check if the user has already applied for this ad
         const { data: applicationData, error: applicationError } = await supabase
@@ -190,6 +203,20 @@ export default function ViewAdPage() {
         
         <h1 className="text-3xl font-bold mb-2 text-gray-800">{ad.title}</h1>
         
+        {/* Add poster information */}
+        <div className="mb-4">
+          <p className="text-sm text-gray-600">
+            Posted by: 
+            {posterFullName ? (
+              <Link href={`/protected/user-profile?id=${ad.user_id}`} className="text-blue-500 hover:underline ml-1">
+                {posterFullName}
+              </Link>
+            ) : (
+              <span className="ml-1">Unknown User</span>
+            )}
+          </p>
+        </div>
+        
         <div className="flex flex-wrap gap-2 mb-4">
           <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
             {ad.region}
@@ -202,6 +229,11 @@ export default function ViewAdPage() {
           {ad.category && (
             <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">
               {ad.category}
+            </span>
+          )}
+          {ad.poster_category && (
+            <span className={`px-3 py-1 rounded-full text-sm ${ad.poster_category === 'private' ? 'bg-yellow-100 text-yellow-800' : 'bg-indigo-100 text-indigo-800'}`}>
+              {ad.poster_category === 'private' ? 'Privatperson' : 'Företag'}
             </span>
           )}
         </div>
