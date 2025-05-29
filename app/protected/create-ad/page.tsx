@@ -16,6 +16,7 @@ export default function CreateAdPage() {
   const [description, setDescription] = useState("");
   const [region, setRegion] = useState("");
   const [municipality, setMunicipality] = useState("");
+  const [posterCategory, setPosterCategory] = useState<'private' | 'business' | ''>('');
   const [locations, setLocations] = useState<Location[]>([]);
   const [distinctRegions, setDistinctRegions] = useState<string[]>([]);
   const [regionSearchTerm, setRegionSearchTerm] = useState("");
@@ -112,8 +113,8 @@ export default function CreateAdPage() {
     setError(null);
     setSuccess(false);
 
-    if (!title || !description || !region) {
-      setError("Titel, Beskrivning och Region är obligatoriska fält");
+    if (!title || !description || !region || !posterCategory) {
+      setError("Titel, Beskrivning, Region och Kategori är obligatoriska fält");
       setIsSubmitting(false);
       return;
     }
@@ -137,7 +138,8 @@ export default function CreateAdPage() {
           title,
           description,
           region,
-          municipality: municipality || null, // Only include if selected
+          municipality: municipality || null,
+          poster_category: posterCategory,
           user_id: profileData.id,
           created_at: new Date().toISOString()
         });
@@ -151,6 +153,7 @@ export default function CreateAdPage() {
       setDescription("");
       setRegion("");
       setMunicipality("");
+      setPosterCategory('');
       
       // Redirect after successful submission
       setTimeout(() => {
@@ -181,14 +184,23 @@ export default function CreateAdPage() {
 
   return (
     <div className="flex-1 w-full flex flex-col items-center">
+      {success && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-lg shadow-xl max-w-md w-full text-center">
+            <div className="mb-6 flex justify-center">
+              <svg className="animate-spin h-12 w-12 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+            </div>
+            <h3 className="text-xl font-bold text-gray-800 mb-2">Din annons har skapats!</h3>
+            <p className="text-gray-600 mb-4">Du kommer att omdirigeras till startsidan...</p>
+          </div>
+        </div>
+      )}
+      
       <div className="w-full max-w-md p-4">
         <h1 className="text-2xl font-bold mb-6">Lägg in annons</h1>
-        
-        {success && (
-          <div className="mb-6 p-3 bg-green-100 text-green-700 rounded">
-            Din annons har skapats! Omdirigerar...
-          </div>
-        )}
         
         {error && (
           <div className="mb-6 p-3 bg-red-100 text-red-700 rounded">
@@ -225,7 +237,36 @@ export default function CreateAdPage() {
               required
             />
           </div>
-          
+           {/* Poster Category */}
+           <div className="mb-6">
+           <label htmlFor="description" className="block font-medium text-gray-700 mb-2">
+              Kategori <span className="text-red-500">*</span>
+            </label>
+            <div className="flex gap-4">
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="posterCategory"
+                  value="private"
+                  checked={posterCategory === 'private'}
+                  onChange={(e) => setPosterCategory(e.target.value as 'private')}
+                  className="mr-2"
+                />
+                Privat
+              </label>
+              <label className="flex items-center">
+                <input
+                  type="radio"
+                  name="posterCategory"
+                  value="business"
+                  checked={posterCategory === 'business'}
+                  onChange={(e) => setPosterCategory(e.target.value as 'business')}
+                  className="mr-2"
+                />
+                Företag
+              </label>
+            </div>
+          </div>
           <div className="relative">
             <label htmlFor="region" className="block font-medium text-gray-700 mb-2">
               Region <span className="text-red-500">*</span>

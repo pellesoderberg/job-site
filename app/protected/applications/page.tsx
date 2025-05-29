@@ -4,6 +4,7 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useNotifications } from "@/components/notification-context";
 
 interface Application {
   id: string;
@@ -127,8 +128,10 @@ export default function ApplicationsPage() {
     fetchApplications();
   }, [adId, applicationId]);
 
+  const { decrementNotificationCount } = useNotifications();
+
   const handleUpdateStatus = async (applicationId: string, newStatus: 'accepted' | 'rejected') => {
-    if (processingId) return; // Prevent multiple simultaneous updates
+    if (processingId) return;
     
     setProcessingId(applicationId);
     
@@ -173,15 +176,27 @@ export default function ApplicationsPage() {
           receiver_id: appData.applicant_id,
           content: messageContent,
           is_system_message: true,
-          for_applicant_only: true  // Add this flag to indicate this message is only for the applicant
+          for_applicant_only: true,
+          read_status: false  // Add this line to explicitly set read_status to false
         });
-        
+      
+      // Check if the application was pending before updating state
+      const wasPending = applications.find(app => app.id === applicationId)?.status === 'pending';
+      
       // Update the local state
       setApplications(prevApps => 
-        prevApps.map(app => 
-          app.id === applicationId ? { ...app, status: newStatus } : app
-        )
+        prevApps.map(app => {
+          if (app.id === applicationId) {
+            return { ...app, status: newStatus };
+          }
+          return app;
+        })
       );
+      
+      // Decrease notification count AFTER state update if it was pending
+      if (wasPending) {
+        decrementNotificationCount(1);
+      }
     } catch (err: any) {
       console.error("Error updating application status:", err);
       setError(err.message || "Failed to update application status");

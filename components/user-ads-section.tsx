@@ -14,6 +14,9 @@ interface UserAd {
   category: string;
   location: string;
   created_at: string;
+  region: string;
+  municipality: string | null;
+  poster_category?: string;
 }
 
 export default function UserAdsSection() {
@@ -95,7 +98,14 @@ export default function UserAdsSection() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h3 className="text-lg font-medium">{ad.title}</h3>
-                      <p className="text-sm text-muted-foreground mt-1">{ad.category} • {ad.location}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {ad.category} • {ad.municipality ? ad.municipality : ad.region}
+                        {ad.poster_category && (
+                          <span className="ml-2 px-2 py-1 text-xs bg-gray-100 rounded">
+                            {ad.poster_category === 'private' ? 'Privat' : 'Företag'}
+                          </span>
+                        )}
+                      </p>
                       <p className="mt-2">{ad.description}</p>
                     </div>
                     <div className="text-xl font-bold">
