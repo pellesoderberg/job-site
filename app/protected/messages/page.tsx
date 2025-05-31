@@ -300,7 +300,7 @@ export default function MessagesPage() {
           <p className="mb-6">{error || "Application not found"}</p>
           <Link href="/">
             <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
-              Back to Home
+            Tillbaka till startsidan
             </button>
           </Link>
         </div>
@@ -320,14 +320,14 @@ export default function MessagesPage() {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
-            Back to listings
+            Tillbaka till startsidan
           </Link>
           
           <h1 className="text-2xl font-bold mt-2">
-            Messages with {otherPersonName}
+            Meddelanden med {otherPersonName}
           </h1>
           <p className="text-sm text-gray-500">
-            Regarding: {application.ad_title}
+            Angående: {application.ad_title}
           </p>
         </div>
         
@@ -377,7 +377,7 @@ export default function MessagesPage() {
               type="text"
               value={newMessage}
               onChange={(e) => setNewMessage(e.target.value)}
-              placeholder="Type your message..."
+              placeholder="Skriv meddelande..."
               className="flex-1 p-3 border rounded-md"
               disabled={application.status !== 'accepted'}
             />
@@ -386,7 +386,7 @@ export default function MessagesPage() {
               disabled={!newMessage.trim() || sendingMessage || application.status !== 'accepted'}
               className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors disabled:bg-gray-300"
             >
-              {sendingMessage ? "Sending..." : "Send"}
+              {sendingMessage ? "Skickar..." : "Skicka"}
             </button>
           </div>
           

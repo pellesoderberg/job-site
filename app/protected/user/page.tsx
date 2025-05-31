@@ -33,12 +33,12 @@ export default function UserProfilePage() {
       // Fetch user data from the 'profiles' table
       const { data, error } = await supabase
         .from('profiles')
-        .select('username, user_description, email_name, municipality')
+        .select('username, user_description, email_name, municipality, avatar_url')
         .eq('id', user.id)
         .single();
       
       if (error) {
-        console.error("Error fetching user data:", error);
+        console.error("Misslyckades att hämta användardata:", error);
       } else {
         setUserData(data);
       }
@@ -51,7 +51,7 @@ export default function UserProfilePage() {
         .order('created_at', { ascending: false });
       
       if (adsError) {
-        console.error("Error fetching user ads:", adsError);
+        console.error("Misslyckades att hämta annonser:", adsError);
       } else {
         setUserAds(adsData || []);
       }
@@ -73,7 +73,7 @@ export default function UserProfilePage() {
         .order('created_at', { ascending: false });
       
       if (applicationsError) {
-        console.error("Error fetching user applications:", applicationsError);
+        console.error("Misslyckades att hämta ansökningar:", applicationsError);
       } else {
         // Format applications data
         const formattedApplications = applicationsData?.map(app => ({
@@ -152,7 +152,7 @@ export default function UserProfilePage() {
   }
 
   const displayName = userData?.username || userData?.email_name || "User";
-  const presentation = userData?.user_description || "No presentation available";
+  const presentation = userData?.user_description || "Ingen presentation tillgänglig";
 
   return (
     <div className="flex-1 w-full flex flex-col items-center">
@@ -160,18 +160,41 @@ export default function UserProfilePage() {
         {/* Profile header with avatar */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-24 h-24 bg-gray-200 rounded-full mb-4 overflow-hidden">
-            {/* Avatar placeholder */}
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
+            {userData?.avatar_url ? (
+              <img 
+                src={userData.avatar_url} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+            )}
           </div>
           <h1 className="text-2xl font-bold">{displayName}</h1>
-          <p className="text-sm text-gray-500">På Blocket sedan 2020</p>
           {userData?.municipality && (
-            <p className="text-sm text-gray-500">{userData.municipality}</p>
+            <p className="text-sm text-gray-500 flex items-center justify-center">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="14" 
+                height="14" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                className="mr-1"
+              >
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              {userData.municipality}
+            </p>
           )}
           
           {/* Action buttons */}
@@ -229,7 +252,6 @@ export default function UserProfilePage() {
           {activeTab === 'ads' && (
             <div>
               <h2 className="text-xl font-medium mb-4">Mina annonser</h2>
-              
               {userAds.length > 0 ? (
                 <div className="space-y-4">
                   {userAds.map((ad) => (
@@ -252,21 +274,21 @@ export default function UserProfilePage() {
                         
                         <div className="mt-4 flex justify-between items-center">
                           <div className="text-xs text-gray-500">
-                            {new Date(ad.created_at).toLocaleDateString()}
+                            Skapad: {new Date(ad.created_at).toLocaleDateString()}
                           </div>
                           
                           <button 
                             onClick={() => toggleApplications(ad.id)}
                             className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors"
                           >
-                            {expandedAdId === ad.id ? 'Hide applications' : 'View applications'}
+                            {expandedAdId === ad.id ? 'Dölj ansökningar' : 'Visa ansökningar'}
                           </button>
                         </div>
                         
                         {/* Applications dropdown */}
                         {expandedAdId === ad.id && (
                           <div className="mt-4 border-t pt-4">
-                            <h4 className="text-md font-medium mb-2">Applications</h4>
+                            <h4 className="text-md font-medium mb-2">Ansökningar</h4>
                             
                             {applications[ad.id] ? (
                               applications[ad.id].length > 0 ? (
@@ -303,7 +325,7 @@ export default function UserProfilePage() {
                                         {app.status === 'pending' && (
                                           <Link href={`/protected/applications?application=${app.id}`}>
                                             <button className="ml-2 px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600">
-                                              Review
+                                              Granska
                                             </button>
                                           </Link>
                                         )}
@@ -312,12 +334,12 @@ export default function UserProfilePage() {
                                   ))}
                                 </div>
                               ) : (
-                                <p className="text-sm text-gray-500">No applications yet.</p>
+                                <p className="text-sm text-gray-500">Inga ansökningar tillgängliga.</p>
                               )
                             ) : (
                               <div className="text-center py-2">
                                 <div className="animate-spin h-5 w-5 border-2 border-blue-500 border-t-transparent rounded-full mx-auto"></div>
-                                <p className="text-sm text-gray-500 mt-1">Loading applications...</p>
+                                <p className="text-sm text-gray-500 mt-1">Laddar ansökningar...</p>
                               </div>
                             )}
                           </div>
@@ -355,7 +377,7 @@ export default function UserProfilePage() {
                             {app.ad_region} {app.ad_municipality ? `• ${app.ad_municipality}` : ''}
                           </p>
                           <p className="text-sm text-gray-500 mt-1">
-                            Posted by: {app.poster_username}
+                            Upplagd av: {app.poster_username}
                           </p>
                         </div>
                         <span className={`px-2 py-1 rounded-full text-xs ${
@@ -365,19 +387,20 @@ export default function UserProfilePage() {
                               ? 'bg-red-100 text-red-800' 
                               : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {app.status.charAt(0).toUpperCase() + app.status.slice(1)}
+                          {app.status === 'pending' ? 'Pågående' :
+                           app.status === 'accepted' ? 'Accepterad' : 'Avvisad'}
                         </span>
                       </div>
                       
                       <div className="mt-4 flex justify-between items-center">
                         <div className="text-xs text-gray-500">
-                          Applied: {new Date(app.created_at).toLocaleDateString()}
+                          Ansökt: {new Date(app.created_at).toLocaleDateString()}
                         </div>
                         
                         {app.status === 'accepted' && (
                           <Link href={`/protected/messages?application=${app.id}`}>
                             <button className="px-3 py-1 bg-blue-500 text-white text-sm rounded hover:bg-blue-600 transition-colors">
-                              View Messages
+                              Visa meddelanden
                             </button>
                           </Link>
                         )}
@@ -385,7 +408,7 @@ export default function UserProfilePage() {
                         {app.status === 'pending' && (
                           <div className="flex space-x-2">
                             <div className="text-sm text-yellow-600">
-                              Waiting for response
+                              Väntar på svar
                             </div>
                             {/* Removed the View Application button for applicants */}
                           </div>
@@ -393,7 +416,7 @@ export default function UserProfilePage() {
                         
                         {app.status === 'rejected' && (
                           <div className="text-sm text-red-600">
-                            Application declined
+                            Ansökan avvisad
                           </div>
                         )}
                       </div>
@@ -421,6 +444,8 @@ export default function UserProfilePage() {
         onClose={() => setIsEditPopupOpen(false)}
         currentName={displayName}
         currentDescription={userData?.user_description || ""}
+        currentMunicipality={userData?.municipality || ""}
+        currentAvatarUrl={userData?.avatar_url || ""}
         userId={user?.id}
       />
     </div>

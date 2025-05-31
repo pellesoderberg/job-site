@@ -152,10 +152,10 @@ export default function ViewAdPage() {
         status: 'pending'
       });
       
-      setSuccessMessage("Your interest has been sent to the poster!");
+      setSuccessMessage("Din intresseanmälan har skickats!");
     } catch (error: any) {
       console.error("Error applying for ad:", error);
-      setError(error.message || "Failed to apply for this ad");
+      setError(error.message || "Misslyckades att skcicka intresseanmälan!");
     } finally {
       setIsSubmitting(false);
     }
@@ -191,7 +191,7 @@ export default function ViewAdPage() {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
-            Back to listings
+            Tillbaka till annonser
           </Link>
         </div>
         
@@ -245,7 +245,7 @@ export default function ViewAdPage() {
         )}
         
         <div className="border-t border-b py-6 my-6">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800">Description</h2>
+          <h2 className="text-xl font-semibold mb-4 text-gray-800">Beskrivning</h2>
           <p className="whitespace-pre-line text-gray-700">{ad.description}</p>
         </div>
         
@@ -254,20 +254,21 @@ export default function ViewAdPage() {
             {applicationStatus.exists ? (
               <div className="p-4 bg-gray-100 rounded-md">
                 <p className="font-medium text-gray-800">
-                  Application Status: <span className={`${
+                  Ansökningsstatus: <span className={`${
                     applicationStatus.status === 'pending' ? 'text-yellow-600' : 
                     applicationStatus.status === 'accepted' ? 'text-green-600' : 
                     'text-red-600'
                   }`}>
-                    {applicationStatus.status?.charAt(0).toUpperCase() + applicationStatus.status?.slice(1)}
+                    {applicationStatus.status === 'pending' ? 'Pågående' :
+                     applicationStatus.status === 'accepted' ? 'Accepterad' : 'Avvisad'}
                   </span>
                 </p>
                 {applicationStatus.status === 'pending' && (
-                  <p className="text-sm mt-2 text-gray-600">Your application is being reviewed by the poster.</p>
+                  <p className="text-sm mt-2 text-gray-600">Din ansökan granskas av annonsören.</p>
                 )}
                 {applicationStatus.status === 'accepted' && (
                   <div className="mt-2">
-                    <p className="text-sm text-gray-600">Your application has been accepted!</p>
+                    <p className="text-sm text-gray-600">Din ansökan har blivit accepterad!</p>
                     <Link href={`/protected/messages?application=${applicationStatus.id}`}>
                       <button className="mt-3 px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
                         View Messages
@@ -276,7 +277,7 @@ export default function ViewAdPage() {
                   </div>
                 )}
                 {applicationStatus.status === 'rejected' && (
-                  <p className="text-sm mt-2 text-gray-600">Your application was not accepted for this position.</p>
+                  <p className="text-sm mt-2 text-gray-600">Din ansökan blev inte accepterad för den här tjänsten.</p>
                 )}
               </div>
             ) : (
@@ -289,7 +290,7 @@ export default function ViewAdPage() {
                     id="applicationMessage"
                     rows={4}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="Introduce yourself and explain why you're interested in this ad..."
+                    placeholder="Presentera dig och förklara varför du är intresserad av denna annons (valfritt)."
                     value={applicationMessage}
                     onChange={(e) => setApplicationMessage(e.target.value)}
                   />
@@ -299,7 +300,7 @@ export default function ViewAdPage() {
                   disabled={isSubmitting}
                   className="w-full py-3 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors disabled:bg-blue-300"
                 >
-                  {isSubmitting ? "Sending..." : "I am interested"}
+                  {isSubmitting ? "Skickar..." : "Skicka intresseanmälan"}
                 </button>
               </div>
             )}
@@ -318,10 +319,7 @@ export default function ViewAdPage() {
         
         <div className="flex justify-between items-center text-sm text-gray-500 mt-6">
           <div>
-            Posted: {new Date(ad.created_at).toLocaleDateString()}
-          </div>
-          <div>
-            Ad ID: {ad.id}
+            Annons upplagd: {new Date(ad.created_at).toLocaleDateString()}
           </div>
         </div>
       </div>

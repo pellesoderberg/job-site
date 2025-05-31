@@ -36,7 +36,7 @@ export default function UserProfilePage() {
         // Fetch user data from the 'profiles' table
         const { data, error } = await supabase
           .from('profiles')
-          .select('username, user_description, email_name, municipality')
+          .select('username, user_description, email_name, municipality, avatar_url')
           .eq('id', userId)
           .single();
         
@@ -90,30 +90,54 @@ export default function UserProfilePage() {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
-            Back to listings
+            Tillbaka till startsidan
           </Link>
         </div>
         
         {/* Profile header with avatar */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-24 h-24 bg-gray-200 rounded-full mb-4 overflow-hidden">
-            {/* Avatar placeholder */}
-            <div className="w-full h-full flex items-center justify-center text-gray-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                <circle cx="12" cy="7" r="4"></circle>
-              </svg>
-            </div>
+            {userData?.avatar_url ? (
+              <img 
+                src={userData.avatar_url} 
+                alt="Profile" 
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="12" cy="7" r="4"></circle>
+                </svg>
+              </div>
+            )}
           </div>
           <h1 className="text-2xl font-bold">{displayName}</h1>
           {userData?.municipality && (
-            <p className="text-sm text-gray-500">{userData.municipality}</p>
+            <p className="text-sm text-gray-500 flex items-center justify-center">
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="14" 
+                height="14" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2" 
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+                className="mr-1"
+              >
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              {userData.municipality}
+            </p>
           )}
         </div>
         
         {/* Profile sections */}
         <div className="border-t pt-6">
-          <h2 className="text-xl font-medium mb-4">About</h2>
+          <h2 className="text-xl font-medium mb-4">Om mig</h2>
           <p className="text-gray-700">{presentation}</p>
         </div>
       </div>

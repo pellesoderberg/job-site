@@ -13,6 +13,20 @@ export default async function AuthButton() {
     data: { user },
   } = await supabase.auth.getUser();
 
+  // Fetch avatar URL from the server side if user exists
+  let avatarUrl = null;
+  if (user) {
+    const { data } = await supabase
+      .from('profiles')
+      .select('avatar_url')
+      .eq('id', user.id)
+      .single();
+    
+    if (data?.avatar_url) {
+      avatarUrl = data.avatar_url;
+    }
+  }
+
   if (!hasEnvVars) {
     return (
       <>
@@ -50,5 +64,5 @@ export default async function AuthButton() {
     );
   }
   
-  return <HeaderAuthClient user={user} />;
+  return <HeaderAuthClient user={user} avatarUrl={avatarUrl} />;
 }

@@ -63,19 +63,110 @@ export default function RootLayout({
                   {children}
                 </div>
 
-                <footer className="w-full flex items-center justify-center border-t mx-auto text-center text-xs gap-8 py-16">
-                  <p>
-                    Powered by{" "}
-                    <a
-                      href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
-                      target="_blank"
-                      className="font-bold hover:underline"
-                      rel="noreferrer"
-                    >
-                      Supabase
-                    </a>
-                  </p>
-                  <ThemeSwitcher />
+                <footer className="w-full bg-gray-50 dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+                  <div className="max-w-6xl mx-auto px-4 py-12">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+                      {/* Company Info */}
+                      <div className="col-span-1 md:col-span-2">
+                        <div className="flex items-center mb-4">
+                          <img 
+                            src="/logo_job_site.png" 
+                            alt="Job Site Logo" 
+                            width={60} 
+                            height={8} 
+                            className="object-contain"
+                          />
+                        </div>
+                        <p className="text-gray-600 dark:text-gray-400 mb-4 max-w-md">
+                          Din plattform för att hitta och publicera jobbannonser. Enkelt, snabbt och effektivt.
+                        </p>
+                        <div className="flex space-x-4">
+                          <ThemeSwitcher />
+                        </div>
+                      </div>
+
+                      {/* Quick Links */}
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Snabblänkar</h3>
+                        <ul className="space-y-2">
+                          <li>
+                            <Link href="/" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                              Hem
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/protected" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                              Sök jobb
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/protected/create-ad" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                              Skapa annons
+                            </Link>
+                          </li>
+                          <li>
+                            <Link href="/protected/user-profile" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                              Min profil
+                            </Link>
+                          </li>
+                        </ul>
+                      </div>
+
+                      {/* Support */}
+                      <div>
+                        <h3 className="font-semibold text-gray-900 dark:text-white mb-4">Support</h3>
+                        <ul className="space-y-2">
+                          <li>
+                            <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                              Hjälp
+                            </a>
+                          </li>
+                          <li>
+                            <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                              Kontakt
+                            </a>
+                          </li>
+                          <li>
+                            <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                              Integritetspolicy
+                            </a>
+                          </li>
+                          <li>
+                            <a href="#" className="text-gray-600 dark:text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
+                              Användarvillkor
+                            </a>
+                          </li>
+                        </ul>
+                      </div>
+                    </div>
+
+                    {/* Bottom Section */}
+                    <div className="border-t border-gray-200 dark:border-gray-700 mt-8 pt-8 flex flex-col md:flex-row justify-between items-center">
+                      <div className="text-gray-600 dark:text-gray-400 text-sm mb-4 md:mb-0">
+                        © 2024 Job Site. Alla rättigheter förbehållna.
+                      </div>
+                      <div className="flex items-center space-x-4 text-sm text-gray-600 dark:text-gray-400">
+                        <span>Powered by</span>
+                        <a
+                          href="https://supabase.com/?utm_source=create-next-app&utm_medium=template&utm_term=nextjs"
+                          target="_blank"
+                          className="font-bold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          rel="noreferrer"
+                        >
+                          Supabase
+                        </a>
+                        <span>•</span>
+                        <a
+                          href="https://nextjs.org"
+                          target="_blank"
+                          className="font-bold hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                          rel="noreferrer"
+                        >
+                          Next.js
+                        </a>
+                      </div>
+                    </div>
+                  </div>
                 </footer>
               </div>
             </main>

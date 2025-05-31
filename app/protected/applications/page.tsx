@@ -165,8 +165,8 @@ export default function ApplicationsPage() {
       
       // Create a system message to notify the applicant
       const messageContent = newStatus === 'accepted' 
-        ? `Your application for "${appData.user_ads.title}" has been accepted! You can now message with the poster.`
-        : `Your application for "${appData.user_ads.title}" has been rejected.`;
+        ? `Din ansökan för "${appData.user_ads.title}" har blivit accepterad! Du kan nu chatta med annonsören.`
+        : `Din ansökan för "${appData.user_ads.title}" har blivit avvisad.`;
         
       await supabase
         .from('messages')
@@ -217,12 +217,12 @@ export default function ApplicationsPage() {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
-            Back to listings
+            Tillbaka till startsidan
           </Link>
         </div>
         
         <h1 className="text-3xl font-bold mb-6 text-gray-800">
-          {adTitle ? `Applications for: ${adTitle}` : 'All Applications'}
+          {adTitle ? `Applications for: ${adTitle}` : 'Ansökningar'}
         </h1>
         
         {error && (
@@ -243,10 +243,10 @@ export default function ApplicationsPage() {
                   <div>
                     <h3 className="text-lg font-medium text-gray-800">{app.applicant_username}</h3>
                     <p className="text-sm text-gray-500">
-                      Applied for: {app.ad_title}
+                      Ansökt för: {app.ad_title}
                     </p>
                     <p className="text-sm text-gray-500">
-                      Date: {new Date(app.created_at).toLocaleDateString()}
+                      Datum: {new Date(app.created_at).toLocaleDateString()}
                     </p>
                   </div>
                   <div className={`px-3 py-1 rounded-full text-sm ${
@@ -262,7 +262,7 @@ export default function ApplicationsPage() {
                 
                 {app.initial_message && (
                   <div className="mt-3 p-3 bg-gray-50 rounded-md">
-                    <p className="text-sm font-medium text-gray-700 mb-1">Applicant's message:</p>
+                    <p className="text-sm font-medium text-gray-700 mb-1">Meddelande:</p>
                     <p className="text-sm text-gray-600">{app.initial_message}</p>
                   </div>
                 )}
@@ -274,14 +274,14 @@ export default function ApplicationsPage() {
                       disabled={processingId === app.id}
                       className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors disabled:bg-green-300 flex-1"
                     >
-                      Accept
+                      Acceptera
                     </button>
                     <button
                       onClick={() => handleUpdateStatus(app.id, 'rejected')}
                       disabled={processingId === app.id}
                       className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors disabled:bg-red-300 flex-1"
                     >
-                      Reject
+                      Avvisa
                     </button>
                   </div>
                 )}

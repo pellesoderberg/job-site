@@ -185,7 +185,7 @@ export default function MessageListPage() {
   };
 
   if (loading) {
-    return <div className="flex-1 w-full flex items-center justify-center">Loading conversations...</div>;
+    return <div className="flex-1 w-full flex items-center justify-center">Laddar meddelanden...</div>;
   }
 
   return (
@@ -196,11 +196,11 @@ export default function MessageListPage() {
             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="mr-2">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
-            Back to listings
+            Tillbaka till startsidan
           </Link>
         </div>
         
-        <h1 className="text-3xl font-bold mb-6 text-gray-800">Messages</h1>
+        <h1 className="text-3xl font-bold mb-6 text-gray-800">Meddelanden</h1>
         
         {error && (
           <div className="mb-6 p-3 bg-red-100 text-red-700 rounded">
@@ -210,7 +210,7 @@ export default function MessageListPage() {
         
         {applications.length === 0 ? (
           <div className="text-center py-10 text-gray-500">
-            No conversations found.
+            Inga konversationer tillgängliga.
           </div>
         ) : (
           <div className="space-y-4">
@@ -241,8 +241,8 @@ export default function MessageListPage() {
                               ? 'bg-red-100 text-red-800' 
                               : 'bg-yellow-100 text-yellow-800'
                         }`}>
-                          {app.status === 'accepted' ? 'Accepted' : 
-                           app.status === 'rejected' ? 'Rejected' : 'Pending'}
+                          {app.status === 'accepted' ? 'Accepterad' : 
+                           app.status === 'rejected' ? 'Avvisad' : 'Pågående'}
                         </div>
                         {app.unread_count > 0 && (
                           <div className="bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
@@ -251,7 +251,7 @@ export default function MessageListPage() {
                         )}
                       </div>
                       <p className="text-sm text-gray-600 mb-1">
-                        Regarding: {app.ad_title}
+                        Angående: {app.ad_title}
                       </p>
                       {app.last_message && (
                         <div className="text-sm text-gray-500">
@@ -271,21 +271,21 @@ export default function MessageListPage() {
                           onClick={() => handleMarkAsRead(app.id)}
                           className="px-3 py-1 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm"
                         >
-                          Mark as Read
+                          Markera som läst
                         </button>
                       ) : app.status === 'accepted' ? (
                         <Link href={`/protected/messages?application=${app.id}`}>
                           <button className="px-3 py-1 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm">
-                            View Messages
+                            Visa meddelanden
                           </button>
                         </Link>
                       ) : (
-                        <span className="text-sm text-gray-500">Waiting for response</span>
+                        <span className="text-sm text-gray-500">Väntar på svar</span>
                       )}
                       {isPoster && isPending && (
                         <Link href={`/protected/applications?application=${app.id}`}>
                           <button className="px-3 py-1 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm">
-                            Review
+                            Granska
                           </button>
                         </Link>
                       )}

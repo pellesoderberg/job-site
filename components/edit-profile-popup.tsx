@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
+import { v4 as uuidv4 } from 'uuid';
 
 interface EditProfilePopupProps {
   isOpen: boolean;
@@ -9,6 +10,7 @@ interface EditProfilePopupProps {
   currentName: string;
   currentDescription?: string;
   currentMunicipality?: string;
+  currentAvatarUrl?: string;
   userId: string;
 }
 
@@ -24,6 +26,7 @@ export default function EditProfilePopup({
   currentName,
   currentDescription = "",
   currentMunicipality = "",
+  currentAvatarUrl = "",
   userId,
 }: EditProfilePopupProps) {
   const [name, setName] = useState(currentName || "");
@@ -35,15 +38,20 @@ export default function EditProfilePopup({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>(currentAvatarUrl || "");
   
   const supabase = createClient();
   const municipalityDropdownRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       fetchLocations();
+      // Reset avatar preview to current avatar URL when popup opens
+      setAvatarPreview(currentAvatarUrl || "");
     }
-  }, [isOpen]);
+  }, [isOpen, currentAvatarUrl]);
 
   // Add click outside listener for municipality dropdown
   useEffect(() => {
@@ -80,6 +88,36 @@ export default function EditProfilePopup({
     }
   }
 
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file type
+    if (!file.type.startsWith('image/')) {
+      setError("Please select an image file");
+      return;
+    }
+
+    // Check file size (limit to 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      setError("Image size should be less than 2MB");
+      return;
+    }
+
+    setAvatarFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setAvatarPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
   if (!isOpen) return null;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -89,12 +127,41 @@ export default function EditProfilePopup({
     setSuccess(false);
 
     try {
+      let avatarUrl = currentAvatarUrl;
+
+      // Upload new avatar if selected
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const fileName = `${userId}-${uuidv4()}.${fileExt}`;
+        
+        // Upload to Supabase Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, avatarFile, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          throw new Error(`Error uploading image: ${uploadError.message}`);
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        avatarUrl = urlData.publicUrl;
+      }
+
+      // Update profile in database
       const { error } = await supabase
         .from('profiles')
         .update({ 
           username: name,
           user_description: description,
-          municipality: municipality || null
+          municipality: municipality || null,
+          avatar_url: avatarUrl
         })
         .eq('id', userId);
 
@@ -127,7 +194,7 @@ export default function EditProfilePopup({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-white rounded-lg p-6 w-full max-w-md">
+      <div className="bg-white rounded-lg p-6 w-full max-w-md max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-2xl font-bold text-gray-800">Om dig</h2>
           <button 
@@ -142,12 +209,49 @@ export default function EditProfilePopup({
         </div>
         
         <p className="text-sm text-gray-600 mb-6">
-          Din information kommer att användas av alla Vend-tjänster.
+          Uppdatera din information nedan.
         </p>
         
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <h3 className="text-lg font-medium text-gray-800 mb-4">Personuppgifter</h3>
+            
+            {/* Profile Image section */}
+            <div className="mb-6 flex flex-col items-center">
+              <div 
+                onClick={handleAvatarClick}
+                className="w-24 h-24 bg-gray-200 rounded-full mb-2 overflow-hidden cursor-pointer relative hover:opacity-90 transition-opacity"
+              >
+                {avatarPreview ? (
+                  <img 
+                    src={avatarPreview} 
+                    alt="Profile" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="12" cy="7" r="4"></circle>
+                    </svg>
+                  </div>
+                )}
+                <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                    <circle cx="12" cy="13" r="4"></circle>
+                  </svg>
+                </div>
+              </div>
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleAvatarChange}
+                accept="image/*"
+                className="hidden"
+              />
+              <p className="text-sm text-gray-500">Klicka för att ladda upp profilbild</p>
+            </div>
             
             {/* Name section */}
             <div className="mb-4">
